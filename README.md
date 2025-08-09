@@ -12,9 +12,17 @@ A simple Flask web app that lets users upload files, encrypts them using AES bef
 - Dev Library: Flask
 - Encryption Library: pycryptodome or cryptography
 - Tools: Git, GitHub, VS Code
-## Setup
-```bash
-pip install -r requirements.txt
-python app.py
+- # Secure File Sharing (Flask + AES)
+
+## Quick Start
+1. `pip install -r requirements.txt`
+2. `python app.py`
+3. Open `http://127.0.0.1:5000`
+
+## Notes
+- Uploaded files are stored as `<filename>.enc` in uploads/.
+- AES key stored in `key.key`. Keep it safe — if lost, encrypted files cannot be recovered.
+- This is a demo. For production use secure key management, HTTPS, auth, and rate-limiting.
+
 
 
