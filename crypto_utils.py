@@ -1,25 +1,38 @@
+# crypto_utils.py
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
+import os
 
-# 32-byte AES key (use env variable in real projects)
-KEY = b"this_is_a_32_byte_secret_key_for_demo!!"
+KEY_FILE = "key.key"
 
-def encrypt_file(input_path, output_path):
-    with open(input_path, "rb") as f:
-        data = f.read()
+def ensure_key():
+    """Create a 16-byte AES key (AES-128) if not exists, and return it."""
+    if not os.path.exists(KEY_FILE):
+        with open(KEY_FILE, "wb") as f:
+            f.write(get_random_bytes(16))
+    with open(KEY_FILE, "rb") as f:
+        return f.read()
+
+KEY = ensure_key()
+
+def encrypt_bytes(plain_bytes: bytes) -> bytes:
+    """
+    Encrypt bytes using AES-EAX.
+    Returns bytes organized as: nonce (16) + tag (16) + ciphertext.
+    """
     cipher = AES.new(KEY, AES.MODE_EAX)
-    ciphertext, tag = cipher.encrypt_and_digest(data)
-    with open(output_path, "wb") as f:
-        f.write(cipher.nonce)
-        f.write(tag)
-        f.write(ciphertext)
+    ciphertext, tag = cipher.encrypt_and_digest(plain_bytes)
+    return cipher.nonce + tag + ciphertext
 
-def decrypt_file(input_path, output_path):
-    with open(input_path, "rb") as f:
-        nonce = f.read(16)
-        tag = f.read(16)
-        ciphertext = f.read()
+def decrypt_bytes(enc_bytes: bytes) -> bytes:
+    """
+    Decrypt bytes that were created by encrypt_bytes.
+    Expects nonce (16) + tag (16) + ciphertext.
+    """
+    if len(enc_bytes) < 32:
+        raise ValueError("Encrypted payload too short")
+    nonce = enc_bytes[:16]
+    tag = enc_bytes[16:32]
+    ciphertext = enc_bytes[32:]
     cipher = AES.new(KEY, AES.MODE_EAX, nonce=nonce)
-    data = cipher.decrypt_and_verify(ciphertext, tag)
-    with open(output_path, "wb") as f:
-        f.write(data)
+    return cipher.decrypt_and_verify(ciphertext, tag)
